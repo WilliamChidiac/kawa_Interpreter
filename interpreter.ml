@@ -33,6 +33,7 @@ let exec_prog (p: program): unit =
         
     and eval (e: expr): value = match e with
       | Int n  -> VInt n
+      | Binop (Add, e1, e2) -> VInt (evali e1 + evali e2)
       | _ -> failwith "case not implemented in eval"
     in
   

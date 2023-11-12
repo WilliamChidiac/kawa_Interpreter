@@ -37,7 +37,7 @@ rule token = parse
   | ")"  { RPAR }
   | "{"  { BEGIN }
   | "}"  { END }
-
+  | "+"  { ADD }
   | _    { raise (Error ("unknown character : " ^ lexeme lexbuf)) }
   | eof  { EOF }
 

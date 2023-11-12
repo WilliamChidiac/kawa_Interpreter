@@ -9,6 +9,7 @@
 %token <string> IDENT
 %token MAIN
 %token LPAR RPAR BEGIN END SEMI
+%token ADD SUB MUL DIV MOD
 %token PRINT
 %token EOF
 
@@ -28,4 +29,8 @@ instruction:
 
 expression:
 | n=INT { Int(n) }
-;
+| e=expression b=bop e1=expression {Binop(b, e, e1)};
+
+bop : 
+| ADD {Add};
+      
