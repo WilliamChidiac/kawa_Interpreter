@@ -38,6 +38,10 @@ rule token = parse
   | "{"  { BEGIN }
   | "}"  { END }
   | "+"  { ADD }
+  | "-"  { SUB }
+  | "*"  { MUL }
+  | "/"  { DIV }
+  | "%"  { MOD }
   | _    { raise (Error ("unknown character : " ^ lexeme lexbuf)) }
   | eof  { EOF }
 
