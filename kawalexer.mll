@@ -42,6 +42,14 @@ rule token = parse
   | "*"  { MUL }
   | "/"  { DIV }
   | "%"  { MOD }
+  | "<"  { LT }
+  | "<="  { LE }
+  | ">"  { GT }
+  | ">="  { GE }
+  | "=="  { EQ }
+  | "!="  { NEQ }
+  | "and"  { AND }
+  | "or"  { OR }
   | _    { raise (Error ("unknown character : " ^ lexeme lexbuf)) }
   | eof  { EOF }
 

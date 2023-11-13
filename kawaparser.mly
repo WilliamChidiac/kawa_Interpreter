@@ -10,10 +10,13 @@
 %token MAIN
 %token LPAR RPAR BEGIN END SEMI
 %token ADD SUB MUL DIV MOD
+%token LT LE GT GE EQ NEQ AND OR
 %token PRINT
 %token EOF
 %left PLUS SUB
 %left MUL DIV MOD 
+%left LT LE GT GE EQ NEQ
+%left AND OR
 
 
 %start program
@@ -41,4 +44,11 @@ bop :
 | MUL {Mul}
 | DIV {Div}
 | MOD {Rem}
-      
+| LT {Lt}
+| LE {Le}
+| GT {Gt}
+| GE {Ge}
+| EQ {Eq}
+| OR {Or}
+| NEQ {Neq}
+| AND {And}

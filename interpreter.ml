@@ -38,6 +38,14 @@ let exec_prog (p: program): unit =
       | Binop (Mul, e1, e2) -> VInt (evali e1 * evali e2)
       | Binop (Div, e1, e2) -> VInt (evali e1 / evali e2)
       | Binop (Rem, e1, e2) -> VInt (evali e1 mod evali e2)
+      | Binop (Lt, e1, e2) -> VBool (evali e1 < evali e2)
+      | Binop (Le, e1, e2) -> VBool (evali e1 <= evali e2)
+      | Binop (Gt, e1, e2) -> VBool (evali e1 > evali e2)
+      | Binop (Ge, e1, e2) -> VBool (evali e1 >= evali e2)
+      | Binop (Eq, e1, e2) -> VBool (evali e1 = evali e2)
+      | Binop (Neq, e1, e2) -> VBool (evali e1 <> evali e2)
+      | Binop (Or, e1, e2) -> VBool (evalb e1 || evalb e2)
+      | Binop (And, e1, e2) -> VBool (evalb e1 && evalb e2)
       | _ -> failwith "case not implemented in eval"
     in
   
