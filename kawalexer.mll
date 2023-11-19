@@ -50,6 +50,7 @@ rule token = parse
   | "!="  { NEQ }
   | "and"  { AND }
   | "or"  { OR }
+  | "!"  { NOT }
   | _    { raise (Error ("unknown character : " ^ lexeme lexbuf)) }
   | eof  { EOF }
 

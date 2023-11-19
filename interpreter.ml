@@ -46,6 +46,8 @@ let exec_prog (p: program): unit =
       | Binop (Neq, e1, e2) -> VBool (evali e1 <> evali e2)
       | Binop (Or, e1, e2) -> VBool (evalb e1 || evalb e2)
       | Binop (And, e1, e2) -> VBool (evalb e1 && evalb e2)
+      | Unop (Opp, e) -> VInt(- evali e)
+      | Unop (Not, e) -> VBool (not (evalb e))
       | _ -> failwith "case not implemented in eval"
     in
   
