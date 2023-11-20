@@ -18,7 +18,7 @@
 }
 
 let digit = ['0'-'9']
-let number = ['-']? digit+
+let number = digit+
 let alpha = ['a'-'z' 'A'-'Z']
 let ident = ['a'-'z' '_'] (alpha | '_' | digit)*
   
@@ -28,6 +28,8 @@ rule token = parse
 
   | "//" [^ '\n']* "\n"  { new_line lexbuf; token lexbuf }
   | "/*"                 { comment lexbuf; token lexbuf }
+  | "true" {BOOL(true)}
+  | "false" {BOOL(false)}
 
   | number as n  { INT(int_of_string n) }
   | ident as id  { keyword_or_ident id }
@@ -48,8 +50,8 @@ rule token = parse
   | ">="  { GE }
   | "=="  { EQ }
   | "!="  { NEQ }
-  | "and"  { AND }
-  | "or"  { OR }
+  | "&&"  { AND }
+  | "||"  { OR }
   | "!"  { NOT }
   | _    { raise (Error ("unknown character : " ^ lexeme lexbuf)) }
   | eof  { EOF }

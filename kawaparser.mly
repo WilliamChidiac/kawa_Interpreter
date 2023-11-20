@@ -7,6 +7,7 @@
 
 %token <int> INT
 %token <string> IDENT
+%token <bool> BOOL
 %token MAIN
 %token LPAR RPAR BEGIN END SEMI
 %token ADD SUB MUL DIV MOD U_SUB (*arithmetique numerique*)
@@ -15,12 +16,12 @@
 %token EOF
 
 (*declaration des priorite*)
-%left PLUS SUB
-%left MUL DIV MOD 
-%nonassoc U_SUB
 %left LT LE GT GE EQ NEQ
 %left AND OR
 %left NOT
+%left ADD SUB
+%left MUL DIV MOD 
+%nonassoc U_SUB
 
 
 %start program
@@ -39,9 +40,10 @@ instruction:
 
 expression:
 | n=INT { Int(n) }
+| b=BOOL {Bool(b)}
 | LPAR e=expression RPAR {e}
 | e=expression b=bop e1=expression {Binop(b, e, e1)}
-| SUB e=expression {Unop(Opp, e)} %prec U_SUB
+| SUB e=expression %prec U_SUB {Unop(Opp, e)}
 | NOT e=expression {Unop(Not, e)}
 ;
 
