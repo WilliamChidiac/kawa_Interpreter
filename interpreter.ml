@@ -52,7 +52,12 @@ let exec_prog (p: program): unit =
     in
   
     let rec exec (i: instr): unit = match i with
-      | Print e -> Printf.printf "%d\n" (evali e)
+      | Print e ->
+        begin match eval e with 
+        |VInt i ->  Printf.printf "%d\n" (i)
+        |VBool b -> Printf.printf "%b\n" b
+        | _ -> failwith "case not implemented in exec"
+        end
       | _ -> failwith "case not implemented in exec"
     and exec_seq s = 
       List.iter exec s
