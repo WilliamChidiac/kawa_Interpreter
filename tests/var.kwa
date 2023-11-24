@@ -1,0 +1,14 @@
+var int x;
+var int y;
+var bool z;
+
+main {
+  x = 1;
+  z = false;
+  y = 6;
+  z = x < y;
+  x = x+2;
+  y = y*(x+4);
+  print(y);
+  print(z);
+}
