@@ -7,6 +7,9 @@ all: build format
 build:
 	$(BUILD) build
 
+clean:
+	$(BUILD) clean
+
 format:
 	@$(BUILD) build @fmt --auto-promote 2> /dev/null || exit 0
 
