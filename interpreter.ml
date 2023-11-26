@@ -33,9 +33,14 @@ let exec_prog (p : program) : unit =
       match eval e with
       | VObj o -> o
       | _ -> assert false
+    and memory (m : mem_access) =
+      match m with
+      | Var s -> s
+      | _ -> failwith "pas encore fait"
     and eval (e : expr) : value =
       match e with
       | Int n -> VInt n
+      | Bool b -> VBool b
       | Binop (Add, e1, e2) -> VInt (evali e1 + evali e2)
       | Binop (Sub, e1, e2) -> VInt (evali e1 - evali e2)
       | Binop (Mul, e1, e2) -> VInt (evali e1 * evali e2)
@@ -51,6 +56,7 @@ let exec_prog (p : program) : unit =
       | Binop (And, e1, e2) -> VBool (evalb e1 && evalb e2)
       | Unop (Opp, e) -> VInt (-evali e)
       | Unop (Not, e) -> VBool (not (evalb e))
+      | Get id -> Hashtbl.find env (memory id)
       | _ -> failwith "case not implemented in eval" in
 
     let rec exec (i : instr) : unit =
@@ -61,6 +67,7 @@ let exec_prog (p : program) : unit =
         | VBool b -> Printf.printf "%b\n" b
         | _ -> failwith "case not implemented in exec"
       end
+      | Set (m, e) -> Hashtbl.add env (memory m) (eval e)
       | _ -> failwith "case not implemented in exec"
     and exec_seq s = List.iter exec s in
 
