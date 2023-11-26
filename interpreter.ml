@@ -1,38 +1,41 @@
 open Kawa
 
 type value =
-  | VInt  of int
+  | VInt of int
   | VBool of bool
-  | VObj  of obj
+  | VObj of obj
   | Null
+
 and obj = {
-  cls:    string;
-  fields: (string, value) Hashtbl.t;
+  cls : string;
+  fields : (string, value) Hashtbl.t;
 }
 
 exception Error of string
+
 exception Return of value
 
-let exec_prog (p: program): unit =
+let exec_prog (p : program) : unit =
   let env = Hashtbl.create 16 in
-  List.iter (fun (x, _) -> Hashtbl.add env x Null) p.globals;
-  
-  let rec eval_call f this args =
-    failwith "eval_call not implemented"
+  List.iter (fun (x, _) -> Hashtbl.add env x Null) p.globals ;
 
+  let rec eval_call f this args = failwith "eval_call not implemented"
   and exec_seq s lenv =
-    let rec evali e = match eval e with
+    let rec evali e =
+      match eval e with
       | VInt n -> n
       | _ -> assert false
-    and evalb e = match eval e with
+    and evalb e =
+      match eval e with
       | VBool b -> b
       | _ -> assert false
-    and evalo e = match eval e with
+    and evalo e =
+      match eval e with
       | VObj o -> o
       | _ -> assert false
-        
-    and eval (e: expr): value = match e with
-      | Int n  -> VInt n
+    and eval (e : expr) : value =
+      match e with
+      | Int n -> VInt n
       | Binop (Add, e1, e2) -> VInt (evali e1 + evali e2)
       | Binop (Sub, e1, e2) -> VInt (evali e1 - evali e2)
       | Binop (Mul, e1, e2) -> VInt (evali e1 * evali e2)
@@ -46,24 +49,21 @@ let exec_prog (p: program): unit =
       | Binop (Neq, e1, e2) -> VBool (evali e1 <> evali e2)
       | Binop (Or, e1, e2) -> VBool (evalb e1 || evalb e2)
       | Binop (And, e1, e2) -> VBool (evalb e1 && evalb e2)
-      | Unop (Opp, e) -> VInt(- evali e)
+      | Unop (Opp, e) -> VInt (-evali e)
       | Unop (Not, e) -> VBool (not (evalb e))
-      | _ -> failwith "case not implemented in eval"
-    in
-  
-    let rec exec (i: instr): unit = match i with
-      | Print e ->
-        begin match eval e with 
-        |VInt i ->  Printf.printf "%d\n" (i)
-        |VBool b -> Printf.printf "%b\n" b
-        | _ -> failwith "case not implemented in exec"
-        end
-      | _ -> failwith "case not implemented in exec"
-    and exec_seq s = 
-      List.iter exec s
-    in
+      | _ -> failwith "case not implemented in eval" in
 
-    exec_seq s
-  in
-  
+    let rec exec (i : instr) : unit =
+      match i with
+      | Print e -> begin
+        match eval e with
+        | VInt i -> Printf.printf "%d\n" i
+        | VBool b -> Printf.printf "%b\n" b
+        | _ -> failwith "case not implemented in exec"
+      end
+      | _ -> failwith "case not implemented in exec"
+    and exec_seq s = List.iter exec s in
+
+    exec_seq s in
+
   exec_seq p.main (Hashtbl.create 1)
