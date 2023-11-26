@@ -66,7 +66,7 @@ expression:
 | NOT e=expression {Unop(Not, e)}
 ;
 
-bop : 
+%inline bop : 
 | OR {Or}
 | AND {And}
 | ADD {Add}
