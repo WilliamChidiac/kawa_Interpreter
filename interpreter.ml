@@ -68,6 +68,15 @@ let exec_prog (p : program) : unit =
         | _ -> failwith "case not implemented in exec"
       end
       | Set (m, e) -> Hashtbl.add env (memory m) (eval e)
+      | If (e, i1, i2) ->
+        if evalb e then
+          exec_seq i1
+        else
+          exec_seq i2
+      | While (e, i) ->
+        while evalb e do
+          exec_seq i
+        done
       | _ -> failwith "case not implemented in exec"
     and exec_seq s = List.iter exec s in
 

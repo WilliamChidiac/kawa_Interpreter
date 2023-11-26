@@ -61,6 +61,13 @@ let typecheck_prog p =
     match i with
     | Print e -> check_multi e [TInt; TBool] tenv
     | Set (m, e) -> check e (type_mem_access m tenv) tenv
+    | If (e, i1, i2) ->
+      check e TBool tenv ;
+      check_seq i1 ret tenv ;
+      check_seq i2 ret tenv
+    | While (e, i) ->
+      check e TBool tenv ;
+      check_seq i ret tenv
     | _ -> failwith "case not implemented in check_instr"
   and check_multi e type_list tenv =
     begin

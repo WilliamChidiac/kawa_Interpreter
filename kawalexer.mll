@@ -10,6 +10,9 @@
   List.iter (fun (s, k) -> Hashtbl.add h s k)
     [ "print",    PRINT;
       "main",     MAIN;
+      "if",       IF;
+      "else",     ELSE;
+      "while",    WHILE;
     ] ;
   fun s ->
     try  Hashtbl.find h s
@@ -28,7 +31,7 @@ rule token = parse
 
   | "//" [^ '\n']* "\n"  { new_line lexbuf; token lexbuf }
   | "/*"                 { comment lexbuf; token lexbuf }
-| "var" {VAR}
+  | "var" {VAR}
   | "int" {VINT}
   | "bool" {VBOOL}
   | "true" {BOOL(true)}

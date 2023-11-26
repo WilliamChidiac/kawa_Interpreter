@@ -14,14 +14,15 @@
 %token LPAR RPAR BEGIN END SEMI
 %token ADD SUB MUL DIV MOD U_SUB (*arithmetique numerique*)
 %token LT LE GT GE EQ NEQ AND OR NOT (*arithmetique booleenne*)
+%token IF ELSE WHILE
 %token PRINT SET
 %token EOF
 
 (*declaration des priorite*)
-%nonassoc SET
-%left LT LE GT GE EQ NEQ
-%left AND OR
-%left NOT
+%left OR
+%left AND
+%nonassoc LT LE GT GE EQ NEQ
+%right NOT 
 %left ADD SUB
 %left MUL DIV MOD 
 %nonassoc U_SUB
@@ -51,6 +52,8 @@ program:
 instruction:
 | PRINT LPAR e=expression RPAR SEMI { Print(e) }
 | m=mem SET e=expression SEMI{Set(m, e)}
+| IF LPAR e=expression RPAR BEGIN i1=instruction* END ELSE BEGIN i2=instruction* END { If(e, i1, i2) }
+| WHILE LPAR e=expression RPAR BEGIN i=instruction* END { While(e, i) }
 ;
 
 expression:
