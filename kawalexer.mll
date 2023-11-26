@@ -13,6 +13,9 @@
       "if",       IF;
       "else",     ELSE;
       "while",    WHILE;
+      "class",    CLASS;
+      "attribute",ATT;
+      "new",      NEW;
     ] ;
   fun s ->
     try  Hashtbl.find h s
@@ -39,7 +42,7 @@ rule token = parse
 
   | number as n  { INT(int_of_string n) }
   | ident as id  { keyword_or_ident id }
-
+  | "."  { DOT }
   | ";"  { SEMI }
   | "="  {SET}
   | "("  { LPAR }

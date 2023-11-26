@@ -48,12 +48,30 @@ let typecheck_prog p =
       check e1 TBool tenv ;
       TBool
     | Get s -> type_mem_access s tenv
+    | New s -> TClass s
     | _ -> failwith "case not implemented in type_expr"
   and type_mem_access m tenv =
     match m with
     | Var s -> begin
       try Env.find s tenv
       with Not_found -> error (Printf.sprintf "Variable %s not found" s)
+    end
+    | Field (exp, attr) -> begin
+      match type_expr exp tenv with
+      | TClass s -> begin
+        match List.find_opt (fun cls -> cls.class_name = s) p.classes with
+        | Some cls -> begin
+          match
+            List.find_opt
+              (fun (att_name, att_typ) -> att_name = attr)
+              cls.attributes
+          with
+          | Some (_, att_typ) -> att_typ
+          | None -> failwith (Printf.sprintf "attribut %s is undefined." attr)
+        end
+        | None -> failwith (Printf.sprintf "object %s is undefined." s)
+      end
+      | _ -> failwith "erreur de syntaxe."
     end
     | _ -> failwith "case not implemented in type_mem_access" in
 

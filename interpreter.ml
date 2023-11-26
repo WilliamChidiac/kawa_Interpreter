@@ -33,9 +33,12 @@ let exec_prog (p : program) : unit =
       match eval e with
       | VObj o -> o
       | _ -> assert false
-    and memory (m : mem_access) =
+    and memory (m : mem_access) env =
       match m with
-      | Var s -> s
+      | Var s -> (s, env)
+      | Field (e, s) ->
+        let o = evalo e in
+        (s, o.fields)
       | _ -> failwith "pas encore fait"
     and eval (e : expr) : value =
       match e with
@@ -56,7 +59,18 @@ let exec_prog (p : program) : unit =
       | Binop (And, e1, e2) -> VBool (evalb e1 && evalb e2)
       | Unop (Opp, e) -> VInt (-evali e)
       | Unop (Not, e) -> VBool (not (evalb e))
-      | Get id -> Hashtbl.find env (memory id)
+      | Get id ->
+        let s, nenv = memory id env in
+        Hashtbl.find nenv s
+      | New s -> begin
+        match List.find_opt (fun a -> a.class_name = s) p.classes with
+        | Some cls ->
+          let atr = Hashtbl.create 10 in
+          List.iter (fun (a, t) -> Hashtbl.add atr a Null) cls.attributes ;
+          VObj { cls = s; fields = atr }
+        | None ->
+          failwith (Printf.sprintf "the class %s has not been implemented." s)
+      end
       | _ -> failwith "case not implemented in eval" in
 
     let rec exec (i : instr) : unit =
@@ -67,7 +81,9 @@ let exec_prog (p : program) : unit =
         | VBool b -> Printf.printf "%b\n" b
         | _ -> failwith "case not implemented in exec"
       end
-      | Set (m, e) -> Hashtbl.add env (memory m) (eval e)
+      | Set (m, e) ->
+        let s, nenv = memory m env in
+        Hashtbl.add nenv s (eval e)
       | If (e, i1, i2) ->
         if evalb e then
           exec_seq i1
