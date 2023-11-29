@@ -48,7 +48,39 @@ let typecheck_prog p =
       check e1 TBool tenv ;
       TBool
     | Get s -> type_mem_access s tenv
+    | This -> type_mem_access (Var "this") tenv
     | New s -> TClass s
+    | NewCstr (s, params) ->
+      begin
+        match List.find_opt (fun cls -> cls.class_name = s) p.classes with
+        | Some cls -> begin
+          match
+            List.find_opt (fun m -> m.method_name = "constructor") cls.methods
+          with
+          | Some meth ->
+            List.iter2 (fun (s, t) e -> check e t tenv) meth.params params
+          | None -> error "no constructor defined for this class"
+        end
+        | None -> error "class is undefined"
+      end ;
+      TClass s
+    | MethCall (obj, s, params) -> begin
+      match type_expr obj tenv with
+      | TClass cls_name -> begin
+        match
+          List.find_opt (fun cls -> cls.class_name = cls_name) p.classes
+        with
+        | Some cls -> begin
+          match List.find_opt (fun m -> m.method_name = s) cls.methods with
+          | Some meth ->
+            List.iter2 (fun (s, t) e -> check e t tenv) meth.params params ;
+            meth.return
+          | None -> error "no constructor defined for this class"
+        end
+        | None -> error "class is undefined"
+      end
+      | _ -> error "syntaxe error"
+    end
     | _ -> failwith "case not implemented in type_expr"
   and type_mem_access m tenv =
     match m with
@@ -72,9 +104,7 @@ let typecheck_prog p =
         | None -> failwith (Printf.sprintf "object %s is undefined." s)
       end
       | _ -> failwith "erreur de syntaxe."
-    end
-    | _ -> failwith "case not implemented in type_mem_access" in
-
+    end in
   let rec check_instr i ret tenv =
     match i with
     | Print e -> check_multi e [TInt; TBool] tenv
@@ -86,7 +116,8 @@ let typecheck_prog p =
     | While (e, i) ->
       check e TBool tenv ;
       check_seq i ret tenv
-    | _ -> failwith "case not implemented in check_instr"
+    | Return e -> ()
+    | Expr e -> ()
   and check_multi e type_list tenv =
     begin
       match type_list with
