@@ -90,19 +90,28 @@ let typecheck_prog p =
     end
     | Field (exp, attr) -> begin
       match type_expr exp tenv with
-      | TClass s -> begin
-        match List.find_opt (fun cls -> cls.class_name = s) p.classes with
-        | Some cls -> begin
-          match
-            List.find_opt
-              (fun (att_name, att_typ) -> att_name = attr)
-              cls.attributes
-          with
-          | Some (_, att_typ) -> att_typ
-          | None -> failwith (Printf.sprintf "attribut %s is undefined." attr)
-        end
-        | None -> failwith (Printf.sprintf "object %s is undefined." s)
-      end
+      | TClass s ->
+        let rec check_att_typ cls_name =
+          begin
+            match
+              List.find_opt (fun cls -> cls.class_name = cls_name) p.classes
+            with
+            | Some cls -> begin
+              match
+                List.find_opt
+                  (fun (att_name, att_typ) -> att_name = attr)
+                  cls.attributes
+              with
+              | Some (_, att_typ) -> att_typ
+              | None -> (
+                match cls.parent with
+                | Some c_name -> check_att_typ c_name
+                | None ->
+                  failwith (Printf.sprintf "attribut %s is undefined." attr))
+            end
+            | None -> failwith (Printf.sprintf "object %s is undefined." s)
+          end in
+        check_att_typ s
       | _ -> failwith "erreur de syntaxe."
     end in
   let rec check_instr i ret tenv =
