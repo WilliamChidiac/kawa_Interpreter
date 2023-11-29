@@ -127,5 +127,16 @@ let typecheck_prog p =
         if typ_e <> types then check_multi e type_list1 tenv
     end
   and check_seq s ret tenv = List.iter (fun i -> check_instr i ret tenv) s in
-
+  let check_meth tenv =
+    p.classes
+    |> List.iter (fun cls ->
+           let aux_env = Env.add "this" (TClass cls.class_name) tenv in
+           cls.methods
+           |> List.iter (fun meth ->
+                  meth.code
+                  |> List.iter (fun instr ->
+                         match instr with
+                         | Return e -> check e meth.return aux_env
+                         | _ -> ()))) in
+  check_meth tenv ;
   check_seq p.main TVoid tenv
