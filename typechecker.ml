@@ -133,10 +133,15 @@ let typecheck_prog p =
            let aux_env = Env.add "this" (TClass cls.class_name) tenv in
            cls.methods
            |> List.iter (fun meth ->
+                  let ret = ref true in
                   meth.code
                   |> List.iter (fun instr ->
                          match instr with
-                         | Return e -> check e meth.return aux_env
-                         | _ -> ()))) in
+                         | Return e ->
+                           check e meth.return aux_env ;
+                           ret := false
+                         | _ -> ()) ;
+                  if meth.return != TVoid && !ret then
+                    type_error TVoid meth.return)) in
   check_meth tenv ;
   check_seq p.main TVoid tenv
