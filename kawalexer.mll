@@ -16,6 +16,10 @@
       "class",    CLASS;
       "attribute",ATT;
       "new",      NEW;
+      "method",   METH;
+      "void",     VVOID;
+      "this",     THIS;
+      "return",   RETURN;
     ] ;
   fun s ->
     try  Hashtbl.find h s
@@ -42,6 +46,7 @@ rule token = parse
 
   | number as n  { INT(int_of_string n) }
   | ident as id  { keyword_or_ident id }
+  | ","  { COMMA }
   | "."  { DOT }
   | ";"  { SEMI }
   | "="  {SET}
