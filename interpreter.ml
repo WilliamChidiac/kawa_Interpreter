@@ -21,26 +21,33 @@ let exec_prog (p : program) : unit =
 
   let rec eval_call f this args =
     let local_env = Hashtbl.create 10 in
-    match List.find_opt (fun cls -> cls.class_name = this.cls) p.classes with
-    | Some cls -> begin
-      match List.find_opt (fun m -> m.method_name = f) cls.methods with
-      | Some m ->
-        Hashtbl.add local_env "this" (VObj this) ;
-        Hashtbl.add local_env "return" Null ;
-        List.iter
-          (fun (name, t) -> Hashtbl.add local_env name (Hashtbl.find env name))
-          p.globals ;
-        List.iter2
-          (fun (name, t) value -> Hashtbl.add local_env name value)
-          m.params args ;
-        List.iter (fun (name, t) -> Hashtbl.add local_env name Null) m.locals ;
-        (try exec_seq m.code local_env with Failure e -> ()) ;
-        Hashtbl.find local_env "return"
-      | None ->
-        failwith
-          (Printf.sprintf "the method you are trying to call is undefined.")
-    end
-    | None -> failwith (Printf.sprintf "class undefined.")
+    let rec eval_meth cls_name =
+      match List.find_opt (fun cls -> cls.class_name = cls_name) p.classes with
+      | Some cls -> begin
+        match List.find_opt (fun m -> m.method_name = f) cls.methods with
+        | Some m ->
+          Hashtbl.add local_env "this" (VObj this) ;
+          Hashtbl.add local_env "return" Null ;
+          List.iter
+            (fun (name, t) ->
+              Hashtbl.add local_env name (Hashtbl.find env name))
+            p.globals ;
+          List.iter2
+            (fun (name, t) value -> Hashtbl.add local_env name value)
+            m.params args ;
+          List.iter (fun (name, t) -> Hashtbl.add local_env name Null) m.locals ;
+          (try exec_seq m.code local_env with Failure e -> ()) ;
+          Hashtbl.find local_env "return"
+        | None -> (
+          match cls.parent with
+          | Some x -> eval_meth x
+          | None ->
+            failwith
+              (Printf.sprintf "the method you are trying to call is undefined.")
+          )
+      end
+      | None -> failwith (Printf.sprintf "class undefined.") in
+    eval_meth this.cls
   and exec_seq s lenv =
     let rec evali e =
       match eval e with
@@ -88,9 +95,12 @@ let exec_prog (p : program) : unit =
       | New s -> begin
         match List.find_opt (fun a -> a.class_name = s) p.classes with
         | Some cls ->
-          let atr = Hashtbl.create 10 in
-          List.iter (fun (a, t) -> Hashtbl.add atr a Null) cls.attributes ;
-          VObj { cls = s; fields = atr }
+          let super =
+            match cls.parent with
+            | Some x -> (evalo (New x)).fields
+            | None -> Hashtbl.create 1 in
+          List.iter (fun (a, t) -> Hashtbl.add super a Null) cls.attributes ;
+          VObj { cls = s; fields = super }
         | None ->
           failwith (Printf.sprintf "the class %s has not been implemented." s)
       end

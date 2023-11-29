@@ -15,7 +15,7 @@
 %token ADD SUB MUL DIV MOD U_SUB (*arithmetique numerique*)
 %token LT LE GT GE EQ NEQ AND OR NOT (*arithmetique booleenne*)
 %token IF ELSE WHILE
-%token CLASS ATT DOT NEW
+%token CLASS EXT ATT DOT NEW
 %token COMMA
 %token METH THIS RETURN
 %token PRINT SET
@@ -60,9 +60,13 @@ meth_def:
       BEGIN locals=var_decl* code=instruction* END
   {{method_name; code; params; locals; return}}
 
+extend_opt:
+| EXT parent=IDENT {Some parent}
+| { None }
+
 class_def:
-| CLASS class_name=IDENT BEGIN attributes=attr_decl* methods=meth_def* END 
-    {{class_name; attributes; methods; parent=None}}
+| CLASS class_name=IDENT parent=extend_opt BEGIN attributes=attr_decl* methods=meth_def*  END 
+    {{class_name; attributes; methods; parent}}
 
 mem:
 | id = IDENT { Var(id) }

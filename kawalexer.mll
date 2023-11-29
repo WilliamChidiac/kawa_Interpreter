@@ -20,6 +20,7 @@
       "void",     VVOID;
       "this",     THIS;
       "return",   RETURN;
+      "extends",  EXT; 
     ] ;
   fun s ->
     try  Hashtbl.find h s
