@@ -31,11 +31,12 @@ let typecheck_prog p =
       check e1 TInt tenv ;
       check e2 TInt tenv ;
       TInt
-    | Binop (exp, e1, e2)
-      when exp = Lt || exp = Le || exp = Gt || exp = Ge || exp = Eq || exp = Neq
-      ->
+    | Binop (exp, e1, e2) when exp = Lt || exp = Le || exp = Gt || exp = Ge ->
       check e1 TInt tenv ;
       check e2 TInt tenv ;
+      TBool
+    | Binop (exp, e1, e2) when exp = Eq || exp = Neq ->
+      check e1 (type_expr e2 tenv) tenv ;
       TBool
     | Binop (exp, e1, e2) when exp = Or || exp = And ->
       check e1 TBool tenv ;
