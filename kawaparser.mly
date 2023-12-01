@@ -116,13 +116,3 @@ expression:
 | EQ {Eq}
 | NEQ {Neq}
 ;
-
-expression:
-| n = INT { Int(n) }
-| b = BOOL { Bool(b) }
-| m = mem {Get (m)}
-| LPAR e=expression RPAR {e}
-| e=expression b=bop e1=expression {Binop(b, e, e1)}
-| SUB e=expression %prec U_SUB {Unop(Opp, e)}
-| NOT e=expression {Unop(Not, e)}
-;
