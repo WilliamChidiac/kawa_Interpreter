@@ -118,7 +118,23 @@ let typecheck_prog p =
   let rec check_instr i ret tenv =
     match i with
     | Print e -> check_multi e [TInt; TBool] tenv
-    | Set (m, e) -> check e (type_mem_access m tenv) tenv
+    | Set (m, e) -> begin
+      match (type_mem_access m tenv, type_expr e tenv) with
+      | TClass static_type, TClass abstract_type ->
+        let rec check_heritage static =
+          if static = abstract_type then
+            ()
+          else
+            let cls = List.find (fun cls -> cls.class_name = static) p.classes in
+            match cls.parent with
+            | Some parent -> Printf.printf "%s" parent;check_heritage parent
+            | None ->
+              error
+                (Printf.sprintf "%s is not a subclass of %s" static_type
+                   abstract_type) in
+        check_heritage static_type
+      | t1, t2 -> if t1 <> t2 then type_error t1 t2
+    end
     | If (e, i1, i2) ->
       check e TBool tenv ;
       check_seq i1 ret tenv ;
