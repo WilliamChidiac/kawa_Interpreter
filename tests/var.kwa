@@ -1,10 +1,12 @@
-var int x;
-var int y;
+var int x, y;
+var int z;
 
 main {
   x = 1;
   y = 6;
+  z = 2;
   x = x+2;
   y = y*(x+4);
   print(y);
+  print(z);
 }

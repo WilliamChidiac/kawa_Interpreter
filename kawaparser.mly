@@ -46,7 +46,12 @@ meth_typ:
 | t=typ {t}
 
 var_decl:
-| VAR t=typ i=IDENT SEMI{(i, t)}
+| VAR t=typ ids=separated_list(COMMA, IDENT) { List.map (fun id -> (id, t)) ids }
+;
+
+var_decl_list:
+| v=var_decl SEMI l=var_decl_list { v @ l }
+| { [] }
 ;
 
 attr_decl:
@@ -57,7 +62,7 @@ params_decl:
 
 meth_def:
 | METH return=meth_typ method_name=IDENT LPAR params=separated_list(COMMA, params_decl) RPAR 
-      BEGIN locals=var_decl* code=instruction* END
+      BEGIN locals=var_decl_list code=instruction* END
   {{method_name; code; params; locals; return}}
 
 extend_opt:
@@ -74,7 +79,7 @@ mem:
 ;
 
 program:
-| globals=var_decl* classes=class_def* MAIN BEGIN main=list(instruction) END EOF
+| globals=var_decl_list classes=class_def* MAIN BEGIN main=list(instruction) END EOF
     { {classes; globals; main} }
 ;
 
@@ -116,4 +121,3 @@ expression:
 | EQ {Eq}
 | NEQ {Neq}
 ;
-
