@@ -127,7 +127,7 @@ let typecheck_prog p =
           else
             let cls = List.find (fun cls -> cls.class_name = static) p.classes in
             match cls.parent with
-            | Some parent -> Printf.printf "%s" parent;check_heritage parent
+            | Some parent -> check_heritage parent
             | None ->
               error
                 (Printf.sprintf "%s is not a subclass of %s" static_type

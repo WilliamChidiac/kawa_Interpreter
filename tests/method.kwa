@@ -1,5 +1,5 @@
 var point p;
-
+var int j;
 class point {
   attribute int x;
   attribute int y;
@@ -9,14 +9,17 @@ class point {
     this.y = b;
   }
 
-  method int somme() {
-    return this.x + this.y;
+  method int somme(int a, int b, bool c, int d) {
+    return this.x;
   }
 }
-
+class line extends point {
+  attribute int z;
+}
 main {
+  print(true);
   p = new point(2, 1);
   p.x = 3 + p.x;
-  print(48 + p.somme());
+  p.somme(1, 2, true, 3);
   // affiche 54
 }

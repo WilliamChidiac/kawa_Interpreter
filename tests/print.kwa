@@ -1,3 +1,18 @@
+var point a;
+var line b;
+
+class point {
+  attribute int x;
+}
+
+class line {
+  attribute point y;
+}
+
 main {
-  print(40);
+  a = new point;
+  b = new line;
+  a.x = 4;
+  b.y = a;
+  print(b.y.x);  
 }
