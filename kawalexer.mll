@@ -21,6 +21,7 @@
       "this",     THIS;
       "return",   RETURN;
       "extends",  EXT; 
+      "super", SUPER; (*extra features*)
     ] ;
   fun s ->
     try  Hashtbl.find h s

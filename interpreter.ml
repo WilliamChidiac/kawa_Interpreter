@@ -21,7 +21,7 @@ let exec_prog (p : program) : unit =
 
   let rec eval_call f this args =
     let local_env = Hashtbl.create 10 in
-    let rec eval_meth cls_name =
+    let rec eval_meth cls_name f =
       match List.find_opt (fun cls -> cls.class_name = cls_name) p.classes with
       | Some cls -> begin
         match List.find_opt (fun m -> m.method_name = f) cls.methods with
@@ -40,14 +40,18 @@ let exec_prog (p : program) : unit =
           Hashtbl.find local_env "return"
         | None -> (
           match cls.parent with
-          | Some x -> eval_meth x
+          | Some x ->
+            if f = "super" then
+              eval_meth x "constructor"
+            else
+              eval_meth x f
           | None ->
             failwith
               (Printf.sprintf "the method you are trying to call is undefined.")
           )
       end
       | None -> failwith (Printf.sprintf "class undefined.") in
-    eval_meth this.cls
+    eval_meth this.cls f
   and exec_seq s lenv =
     let rec evali e =
       match eval e with

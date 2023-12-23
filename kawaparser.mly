@@ -18,6 +18,7 @@
 %token CLASS EXT ATT DOT NEW
 %token COMMA
 %token METH THIS RETURN
+%token SUPER
 %token PRINT SET
 %token EOF
 
@@ -104,6 +105,7 @@ expression:
 | NEW cls=IDENT LPAR params=separated_list(COMMA, expression) RPAR {NewCstr(cls, params)}
 | THIS { This }
 | obj=expression DOT meth=IDENT LPAR params=separated_list(COMMA, expression) RPAR {MethCall(obj, meth, params)}
+| SUPER LPAR params=separated_list(COMMA, expression) RPAR {MethCall(This, "super", params)}
 ;
 
 %inline bop : 
