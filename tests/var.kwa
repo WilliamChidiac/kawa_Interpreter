@@ -9,7 +9,7 @@ class point{
   }
   method void add(int a){
     var int j = 100, i = 90;
-    this.x = false;
+    this.x = 20;
     print(j);
     print(i);
     print(a);

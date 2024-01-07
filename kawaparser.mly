@@ -53,10 +53,6 @@ var:
 decl:
 |t=typ ids=separated_list(COMMA, var) { List.map (fun (id, value) -> (id, t, value)) ids }
 
-var_decl:
-| VAR l=decl {l}
-;
-
 var_decl_list:
 | VAR v=decl SEMI l=var_decl_list { v @ l }
 | { [] }

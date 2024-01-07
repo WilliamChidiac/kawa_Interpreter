@@ -14,9 +14,6 @@ module Env = Map.Make (String)
 
 type tenv = typ Env.t
 
-let add_env l tenv =
-  List.fold_left (fun env (x, t, _) -> Env.add x t env) tenv l
-
 let typecheck_prog p =
   let rec add_env l tenv =
     List.fold_left
@@ -121,8 +118,8 @@ let typecheck_prog p =
           end in
         check_att_typ s
       | _ -> failwith "erreur de syntaxe."
-    end in
-  let rec check_instr i ret tenv =
+    end
+  and check_instr i ret tenv =
     match i with
     | Print e -> check_multi e [TInt; TBool] tenv
     | Set (m, e) -> begin
@@ -140,7 +137,7 @@ let typecheck_prog p =
                 (Printf.sprintf "%s is not a subclass of %s" static_type
                    abstract_type) in
         check_heritage static_type
-      | t1, t2 -> if t1 <> t2 then type_error t1 t2
+      | t1, t2 -> if t1 <> t2 then type_error t2 t1
     end
     | If (e, i1, i2) ->
       check e TBool tenv ;
@@ -150,7 +147,9 @@ let typecheck_prog p =
       check e TBool tenv ;
       check_seq i ret tenv
     | Return e -> ()
-    | Expr e -> ()
+    | Expr e ->
+      let _ = type_expr e tenv in
+      ()
   and check_multi e type_list tenv =
     begin
       match type_list with
@@ -161,21 +160,31 @@ let typecheck_prog p =
     end
   and check_seq s ret tenv = List.iter (fun i -> check_instr i ret tenv) s in
   let check_meth tenv =
-    p.classes
-    |> List.iter (fun cls ->
-           let aux_env = Env.add "this" (TClass cls.class_name) tenv in
-           cls.methods
-           |> List.iter (fun meth ->
-                  let ret = ref true in
-                  meth.code
-                  |> List.iter (fun instr ->
-                         match instr with
-                         | Return e ->
-                           check e meth.return aux_env ;
-                           ret := false
-                         | _ -> ()) ;
-                  if meth.return != TVoid && !ret then
-                    type_error TVoid meth.return)) in
+    List.iter
+      (fun cls ->
+        let aux_env = Env.add "this" (TClass cls.class_name) tenv in
+        List.iter
+          (fun meth ->
+            let ret = ref true in
+            let aux_env =
+              List.fold_left
+                (fun env (name, t) -> Env.add name t env)
+                aux_env meth.params in
+            let aux_env =
+              List.fold_left
+                (fun env (name, t, _) -> Env.add name t env)
+                aux_env meth.locals in
+            List.iter
+              (fun instr ->
+                match instr with
+                | Return e ->
+                  check e meth.return aux_env ;
+                  ret := false
+                | instr -> check_instr instr ret aux_env)
+              meth.code ;
+            if meth.return != TVoid && !ret then type_error TVoid meth.return)
+          cls.methods)
+      p.classes in
   let tenv = add_env p.globals Env.empty in
   check_meth tenv ;
   check_seq p.main TVoid tenv
