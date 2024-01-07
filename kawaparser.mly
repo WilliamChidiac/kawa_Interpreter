@@ -18,9 +18,12 @@
 %token CLASS EXT DOT NEW
 %token COMMA
 %token METH THIS RETURN
+%token PRINT SET
+
 %token SUPER
 %token PRIVATE PROTECTED
-%token PRINT SET
+%token FINAL STATIC
+
 %token EOF
 
 (*declaration des priorite*)
@@ -51,8 +54,13 @@ var:
 | id=IDENT {(id, None)}
 | id=IDENT SET v=expression {(id, Some v)}
 
+final:
+| FINAL {true}
+| {false}
+
 decl:
-|t=typ ids=separated_list(COMMA, var) { List.map (fun (id, value) -> (id, t, value)) ids }
+|v_final=final v_typ=typ ids=separated_list(COMMA, var) 
+{ List.map (fun (v_name, v_value) -> {v_name; v_typ; v_value; v_final}) ids }
 
 var_decl_list:
 | VAR v=decl SEMI l=var_decl_list { v @ l }
@@ -64,7 +72,16 @@ visibility:
 | PROTECTED {Protected}
 
 attr_decl:
-| a_visibility=visibility v=decl SEMI l=attr_decl {List.fold_left (fun li e -> match e with a_name, a_type, _ -> {a_name; a_type; a_visibility} :: li) l v}
+| a_visibility=visibility v=decl SEMI l=attr_decl 
+  {List.fold_left 
+    (fun li var -> 
+      {a_name=var.v_name; 
+       a_type=var.v_typ; 
+       a_visibility=a_visibility;
+       a_final=var.v_final; 
+       a_static=false; 
+       a_value=var.v_value} :: li
+    )l v}
 | { [] }
 
 params_decl:

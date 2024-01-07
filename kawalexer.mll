@@ -29,6 +29,8 @@
       "super",    SUPER; 
       "private",  PRIVATE;
       "protected",PROTECTED;
+      "final",    FINAL;
+      "static",   STATIC;
     ] ;
   fun s ->
     try  Hashtbl.find h s

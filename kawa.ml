@@ -83,11 +83,27 @@ type visibility =
   | Private
   | Protected
 
+type variable = {
+  v_name : string;
+  v_typ : typ;
+  v_value : expr option;
+  v_final : bool;
+}
+
+type attribute = {
+  a_name : string;
+  a_type : typ;
+  a_visibility : visibility;
+  a_final : bool;
+  a_static : bool;
+  mutable a_value : expr option;
+}
+
 type method_def = {
   method_name : string;
   code : seq;
   params : (string * typ) list;
-  locals : (string * typ * expr option) list;
+  locals : variable list;
   return : typ;
   visibility : visibility;
 }
@@ -101,12 +117,6 @@ type method_def = {
    "constructor" et de type de retour void, qui initialise les champs du
    paramètre implicite this. *)
 
-type attribute = {
-  a_name : string;
-  a_type : typ;
-  a_visibility : visibility;
-}
-
 type class_def = {
   class_name : string;
   attributes : attribute list;
@@ -118,6 +128,6 @@ type class_def = {
    d'instructions *)
 type program = {
   classes : class_def list;
-  globals : (string * typ * expr option) list;
+  globals : variable list;
   main : seq;
 }

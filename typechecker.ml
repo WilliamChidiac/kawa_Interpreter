@@ -17,11 +17,11 @@ type tenv = typ Env.t
 let typecheck_prog p =
   let rec add_env l tenv =
     List.fold_left
-      (fun env (x, t, e) ->
-        (match e with
-        | Some e -> check e t tenv
+      (fun env var ->
+        (match var.v_value with
+        | Some e -> check e var.v_typ tenv
         | None -> ()) ;
-        Env.add x t env)
+        Env.add var.v_name var.v_typ env)
       tenv l
   and check e typ tenv =
     let typ_e = type_expr e tenv in
@@ -208,7 +208,7 @@ let typecheck_prog p =
                 aux_env meth.params in
             let aux_env =
               List.fold_left
-                (fun env (name, t, _) -> Env.add name t env)
+                (fun env var -> Env.add var.v_name var.v_typ env)
                 aux_env meth.locals in
             List.iter
               (fun instr ->

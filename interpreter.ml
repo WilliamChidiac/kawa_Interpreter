@@ -19,10 +19,10 @@ let exec_prog (p : program) : unit =
   let env = Hashtbl.create 16 in
   let init_var =
     List.fold_left
-      (fun l (x, _, v) ->
-        Hashtbl.add env x Null ;
-        match v with
-        | Some v -> Set (Var x, v) :: l
+      (fun l var ->
+        Hashtbl.add env var.v_name Null ;
+        match var.v_value with
+        | Some v -> Set (Var var.v_name, v) :: l
         | None -> l)
       [] p.globals in
 
@@ -40,10 +40,10 @@ let exec_prog (p : program) : unit =
             m.params args ;
           let e_l =
             List.fold_left
-              (fun l (name, t, e) ->
-                Hashtbl.add local_env name Null ;
-                match e with
-                | Some e -> Set (Var name, e) :: l
+              (fun l var ->
+                Hashtbl.add local_env var.v_name Null ;
+                match var.v_value with
+                | Some e -> Set (Var var.v_name, e) :: l
                 | None -> l)
               [] m.locals in
           exec_seq e_l local_env ;
