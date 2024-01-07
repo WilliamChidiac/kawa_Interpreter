@@ -17,7 +17,13 @@ exception Return of value
 
 let exec_prog (p : program) : unit =
   let env = Hashtbl.create 16 in
-  List.iter (fun (x, _) -> Hashtbl.add env x Null) p.globals ;
+  List.iter
+    (fun (x, _, v) ->
+      match v with
+      | VAInt v -> Hashtbl.add env x (VInt v)
+      | VABool b -> Hashtbl.add env x (VBool b)
+      | VANull -> Hashtbl.add env x Null)
+    p.globals ;
 
   let rec eval_call f this args =
     let local_env = Hashtbl.create 10 in
@@ -29,13 +35,15 @@ let exec_prog (p : program) : unit =
           Hashtbl.add local_env "this" (VObj this) ;
           Hashtbl.add local_env "return" Null ;
           List.iter
-            (fun (name, t) ->
+            (fun (name, t, _) ->
               Hashtbl.add local_env name (Hashtbl.find env name))
             p.globals ;
           List.iter2
             (fun (name, t) value -> Hashtbl.add local_env name value)
             m.params args ;
-          List.iter (fun (name, t) -> Hashtbl.add local_env name Null) m.locals ;
+          List.iter
+            (fun (name, t, _) -> Hashtbl.add local_env name Null)
+            m.locals ;
           (try exec_seq m.code local_env with Failure e -> ()) ;
           Hashtbl.find local_env "return"
         | None -> (

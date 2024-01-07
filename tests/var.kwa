@@ -1,10 +1,9 @@
 var int x, y;
-var int z;
+var int z = 6;
 
 main {
   x = 1;
   y = 6;
-  z = 2;
   x = x+2;
   y = y*(x+4);
   print(y);

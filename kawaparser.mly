@@ -47,7 +47,9 @@ meth_typ:
 | t=typ {t}
 
 var_decl:
-| VAR t=typ ids=separated_list(COMMA, IDENT) { List.map (fun id -> (id, t)) ids }
+| VAR t=typ ids=separated_list(COMMA, IDENT) { List.map (fun id -> (id, t, VANull)) ids }
+| VAR t=typ id=IDENT SET v=INT {[(id, TInt, VAInt(v))]}
+| VAR t=typ id=IDENT SET v=BOOL {[(id, TBool, VABool(v))]}
 ;
 
 var_decl_list:

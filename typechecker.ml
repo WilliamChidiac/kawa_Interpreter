@@ -14,7 +14,8 @@ module Env = Map.Make (String)
 
 type tenv = typ Env.t
 
-let add_env l tenv = List.fold_left (fun env (x, t) -> Env.add x t env) tenv l
+let add_env l tenv =
+  List.fold_left (fun env (x, t, _) -> Env.add x t env) tenv l
 
 let typecheck_prog p =
   let tenv = add_env p.globals Env.empty in
