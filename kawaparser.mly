@@ -46,19 +46,25 @@ meth_typ:
 | VVOID {TVoid}
 | t=typ {t}
 
+var:
+| id=IDENT {(id, None)}
+| id=IDENT SET v=expression {(id, Some v)}
+
+decl:
+|t=typ ids=separated_list(COMMA, var) { List.map (fun (id, value) -> (id, t, value)) ids }
+
 var_decl:
-| VAR t=typ ids=separated_list(COMMA, IDENT) { List.map (fun id -> (id, t, VANull)) ids }
-| VAR t=typ id=IDENT SET v=INT {[(id, TInt, VAInt(v))]}
-| VAR t=typ id=IDENT SET v=BOOL {[(id, TBool, VABool(v))]}
+| VAR l=decl {l}
 ;
 
 var_decl_list:
-| v=var_decl SEMI l=var_decl_list { v @ l }
+| VAR v=decl SEMI l=var_decl_list { v @ l }
 | { [] }
 ;
 
 attr_decl:
-| ATT t=typ i=IDENT SEMI {(i, t)}
+| ATT v=decl SEMI l=attr_decl {List.fold_left (fun li e -> match e with x, t, _ -> (x, t) :: li) l v}
+| { [] }
 
 params_decl:
 | t=typ i=IDENT {(i, t)}
@@ -73,7 +79,7 @@ extend_opt:
 | { None }
 
 class_def:
-| CLASS class_name=IDENT parent=extend_opt BEGIN attributes=attr_decl* methods=meth_def*  END 
+| CLASS class_name=IDENT parent=extend_opt BEGIN attributes=attr_decl methods=meth_def*  END 
     {{class_name; attributes; methods; parent}}
 
 mem:

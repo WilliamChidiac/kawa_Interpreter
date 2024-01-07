@@ -18,9 +18,15 @@ let add_env l tenv =
   List.fold_left (fun env (x, t, _) -> Env.add x t env) tenv l
 
 let typecheck_prog p =
-  let tenv = add_env p.globals Env.empty in
-
-  let rec check e typ tenv =
+  let rec add_env l tenv =
+    List.fold_left
+      (fun env (x, t, e) ->
+        (match e with
+        | Some e -> check e t tenv
+        | None -> ()) ;
+        Env.add x t env)
+      tenv l
+  and check e typ tenv =
     let typ_e = type_expr e tenv in
     if typ_e <> typ then type_error typ_e typ
   and type_expr e tenv =
@@ -170,5 +176,6 @@ let typecheck_prog p =
                          | _ -> ()) ;
                   if meth.return != TVoid && !ret then
                     type_error TVoid meth.return)) in
+  let tenv = add_env p.globals Env.empty in
   check_meth tenv ;
   check_seq p.main TVoid tenv

@@ -1,10 +1,6 @@
 (**
    Kawa : un petit langage à objets inspiré de Java
  *)
-type valu =
-  | VAInt of int
-  | VABool of bool
-  | VANull
 
 (* Types déclarés pour les attributs, pour les variables, et pour les
    paramètres et résultats des méthodes. *)
@@ -86,7 +82,7 @@ type method_def = {
   method_name : string;
   code : seq;
   params : (string * typ) list;
-  locals : (string * typ * valu) list;
+  locals : (string * typ * expr option) list;
   return : typ;
 }
 
@@ -109,6 +105,6 @@ type class_def = {
    d'instructions *)
 type program = {
   classes : class_def list;
-  globals : (string * typ * valu) list;
+  globals : (string * typ * expr option) list;
   main : seq;
 }

@@ -17,33 +17,36 @@ exception Return of value
 
 let exec_prog (p : program) : unit =
   let env = Hashtbl.create 16 in
-  List.iter
-    (fun (x, _, v) ->
-      match v with
-      | VAInt v -> Hashtbl.add env x (VInt v)
-      | VABool b -> Hashtbl.add env x (VBool b)
-      | VANull -> Hashtbl.add env x Null)
-    p.globals ;
+  let init_var =
+    List.fold_left
+      (fun l (x, _, v) ->
+        Hashtbl.add env x Null ;
+        match v with
+        | Some v -> Set (Var x, v) :: l
+        | None -> l)
+      [] p.globals in
 
-  let rec eval_call f this args =
-    let local_env = Hashtbl.create 10 in
+  let rec eval_call f this args env =
     let rec eval_meth cls_name f =
       match List.find_opt (fun cls -> cls.class_name = cls_name) p.classes with
       | Some cls -> begin
         match List.find_opt (fun m -> m.method_name = f) cls.methods with
         | Some m ->
+          let local_env = Hashtbl.copy env in
           Hashtbl.add local_env "this" (VObj this) ;
           Hashtbl.add local_env "return" Null ;
-          List.iter
-            (fun (name, t, _) ->
-              Hashtbl.add local_env name (Hashtbl.find env name))
-            p.globals ;
           List.iter2
             (fun (name, t) value -> Hashtbl.add local_env name value)
             m.params args ;
-          List.iter
-            (fun (name, t, _) -> Hashtbl.add local_env name Null)
-            m.locals ;
+          let e_l =
+            List.fold_left
+              (fun l (name, t, e) ->
+                Hashtbl.add local_env name Null ;
+                match e with
+                | Some e -> Set (Var name, e) :: l
+                | None -> l)
+              [] m.locals in
+          exec_seq e_l local_env ;
           (try exec_seq m.code local_env with Failure e -> ()) ;
           Hashtbl.find local_env "return"
         | None -> (
@@ -118,10 +121,10 @@ let exec_prog (p : program) : unit =
       end
       | NewCstr (cls_name, params) ->
         let obj = evalo (New cls_name) in
-        let _ = eval_call "constructor" obj (get_params_value params) in
+        let _ = eval_call "constructor" obj (get_params_value params) lenv in
         VObj obj
       | MethCall (o, meth, param_expression) ->
-        get_params_value param_expression |> eval_call meth (evalo o)
+        (get_params_value param_expression |> eval_call meth (evalo o)) lenv
     and get_params_value params =
       List.rev
         (List.fold_left (fun p_eval p_exp -> eval p_exp :: p_eval) [] params)
@@ -155,5 +158,5 @@ let exec_prog (p : program) : unit =
     and exec_seq s = List.iter exec s in
 
     exec_seq s in
-
+  exec_seq init_var env ;
   exec_seq p.main env

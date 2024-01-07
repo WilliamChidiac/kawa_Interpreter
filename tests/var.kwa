@@ -1,11 +1,31 @@
 var int x, y;
-var int z = 6;
-
+var int z = 30, r=1, p;
+var point po;
+class point{
+  attribute int x, y;
+  method void constructor(){
+    this.x = 1;
+    this.y = 2;
+  }
+  method void add(int a){
+    var int j = 100, i = 90;
+    this.x = false;
+    print(j);
+    print(i);
+    print(a);
+  }
+}
 main {
+  po = new point();
+  po.add(true);
   x = 1;
   y = 6;
   x = x+2;
   y = y*(x+4);
+  p = 2;
   print(y);
   print(z);
+  print(r);
+  print(p);
+  
 }
