@@ -78,12 +78,18 @@ and seq = instr list
    Syntaxe : method <type de retour> <nom> (<params>) { ... }
 
    Le corps de la méthode est similaire au corps d'une fonction. *)
+
+type visibility =
+  | Private
+  | Protected
+
 type method_def = {
   method_name : string;
   code : seq;
   params : (string * typ) list;
   locals : (string * typ * expr option) list;
   return : typ;
+  visibility : visibility;
 }
 
 (* Définition de classe
@@ -94,9 +100,16 @@ type method_def = {
    On considère que toute classe C contient une définition de méthode de nom
    "constructor" et de type de retour void, qui initialise les champs du
    paramètre implicite this. *)
+
+type attribute = {
+  a_name : string;
+  a_type : typ;
+  a_visibility : visibility;
+}
+
 type class_def = {
   class_name : string;
-  attributes : (string * typ) list;
+  attributes : attribute list;
   methods : method_def list;
   parent : string option;
 }

@@ -2,7 +2,7 @@ var int x, y;
 var int z = 30, r=1, p;
 var point po;
 class point{
-  attribute int x, y;
+  protected int x, y;
   method void constructor(){
     this.x = 1;
     this.y = 2;
@@ -17,7 +17,8 @@ class point{
 }
 main {
   po = new point();
-  po.add(true);
+  po.add(20);
+  print(po.y);
   x = 1;
   y = 6;
   x = x+2;

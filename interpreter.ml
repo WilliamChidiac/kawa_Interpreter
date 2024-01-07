@@ -114,7 +114,7 @@ let exec_prog (p : program) : unit =
             match cls.parent with
             | Some x -> (evalo (New x)).fields
             | None -> Hashtbl.create 1 in
-          List.iter (fun (a, t) -> Hashtbl.add super a Null) cls.attributes ;
+          List.iter (fun a -> Hashtbl.add super a.a_name Null) cls.attributes ;
           VObj { cls = s; fields = super }
         | None ->
           failwith (Printf.sprintf "the class %s has not been implemented." s)

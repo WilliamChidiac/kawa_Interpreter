@@ -15,10 +15,11 @@
 %token ADD SUB MUL DIV MOD U_SUB (*arithmetique numerique*)
 %token LT LE GT GE EQ NEQ AND OR NOT (*arithmetique booleenne*)
 %token IF ELSE WHILE
-%token CLASS EXT ATT DOT NEW
+%token CLASS EXT DOT NEW
 %token COMMA
 %token METH THIS RETURN
 %token SUPER
+%token PRIVATE PROTECTED
 %token PRINT SET
 %token EOF
 
@@ -58,17 +59,21 @@ var_decl_list:
 | { [] }
 ;
 
+visibility:
+| PRIVATE {Private}
+| PROTECTED {Protected}
+
 attr_decl:
-| ATT v=decl SEMI l=attr_decl {List.fold_left (fun li e -> match e with x, t, _ -> (x, t) :: li) l v}
+| a_visibility=visibility v=decl SEMI l=attr_decl {List.fold_left (fun li e -> match e with a_name, a_type, _ -> {a_name; a_type; a_visibility} :: li) l v}
 | { [] }
 
 params_decl:
 | t=typ i=IDENT {(i, t)}
 
 meth_def:
-| METH return=meth_typ method_name=IDENT LPAR params=separated_list(COMMA, params_decl) RPAR 
+| METH visibility=visibility return=meth_typ method_name=IDENT LPAR params=separated_list(COMMA, params_decl) RPAR 
       BEGIN locals=var_decl_list code=instruction* END
-  {{method_name; code; params; locals; return}}
+  {{method_name; code; params; locals; return; visibility}}
 
 extend_opt:
 | EXT parent=IDENT {Some parent}

@@ -72,17 +72,49 @@ let typecheck_prog p =
     | MethCall (obj, s, params) -> begin
       match type_expr obj tenv with
       | TClass cls_name -> begin
-        match
-          List.find_opt (fun cls -> cls.class_name = cls_name) p.classes
-        with
-        | Some cls -> begin
-          match List.find_opt (fun m -> m.method_name = s) cls.methods with
-          | Some meth ->
-            List.iter2 (fun (s, t) e -> check e t tenv) meth.params params ;
-            meth.return
-          | None -> error "no constructor defined for this class"
-        end
-        | None -> error "class is undefined"
+        let s =
+          if s = "super" then
+            match
+              (List.find (fun cls -> cls.class_name = cls_name) p.classes)
+                .parent
+            with
+            | Some parent -> parent
+            | None ->
+              failwith "you can't use the super keyword if this has no parents."
+          else
+            s in
+        let rec get_return_typ cls_name accessible =
+          begin
+            match
+              List.find_opt (fun cls -> cls.class_name = cls_name) p.classes
+            with
+            | Some cls -> begin
+              let s =
+                if s = cls.class_name then
+                  "constructor"
+                else
+                  s in
+              match
+                List.find_opt (fun meth -> meth.method_name = s) cls.methods
+              with
+              | Some meth ->
+                if accessible || meth.visibility = Protected then
+                  meth.return
+                else
+                  error
+                    (Printf.sprintf
+                       "the method %s is private and can only be accessed from \
+                        inside the class %s"
+                       meth.method_name cls.class_name)
+              | None -> (
+                match cls.parent with
+                | Some c_name -> get_return_typ c_name false
+                | None -> failwith (Printf.sprintf "method %s is undefined." s))
+            end
+            | None ->
+              failwith (Printf.sprintf "class %s should not exist." cls_name)
+          end in
+        get_return_typ cls_name true
       end
       | _ -> error "syntaxe error"
     end
@@ -96,27 +128,31 @@ let typecheck_prog p =
     | Field (exp, attr) -> begin
       match type_expr exp tenv with
       | TClass s ->
-        let rec check_att_typ cls_name =
+        let rec check_att_typ cls_name accessible =
           begin
             match
               List.find_opt (fun cls -> cls.class_name = cls_name) p.classes
             with
             | Some cls -> begin
-              match
-                List.find_opt
-                  (fun (att_name, att_typ) -> att_name = attr)
-                  cls.attributes
-              with
-              | Some (_, att_typ) -> att_typ
+              match List.find_opt (fun a -> a.a_name = attr) cls.attributes with
+              | Some a ->
+                if accessible || a.a_visibility = Protected then
+                  a.a_type
+                else
+                  error
+                    (Printf.sprintf
+                       "the attribute %s is private and can only be accessed \
+                        from inside the class %s"
+                       a.a_name cls.class_name)
               | None -> (
                 match cls.parent with
-                | Some c_name -> check_att_typ c_name
+                | Some c_name -> check_att_typ c_name false
                 | None ->
                   failwith (Printf.sprintf "attribut %s is undefined." attr))
             end
             | None -> failwith (Printf.sprintf "object %s is undefined." s)
           end in
-        check_att_typ s
+        check_att_typ s true
       | _ -> failwith "erreur de syntaxe."
     end
   and check_instr i ret tenv =

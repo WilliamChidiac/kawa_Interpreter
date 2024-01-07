@@ -4,32 +4,29 @@ var triple pt;
 var triple t;
 
 class paire {
-  attribute int x;
-  attribute int y;
+  protected int x;
+  private int y;
 
-  method void constructor(int x, int y) {
+  method protected void constructor(int x, int y) {
     this.x = x;
     this.y = y;
   }
 
-  method int somme() {
+  method protected int somme() {
     return this.x + this.y; 
   }
 }
 
 class triple extends paire {
-  attribute int z;
+  protected int z;
 
-  method void constructor(int x, int y, int z) {
+  method protected void constructor(int x, int y, int z) {
     super(x, y);
     this.z = z;
   }
 
-  method int somme() {
-    return this.x + this.y + this.z;
-  }
-
-  method int produit() {
+  
+  method private int produit() {
     return this.x * this.y * this.z;
   }
 }
