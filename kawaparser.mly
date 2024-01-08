@@ -21,7 +21,7 @@
 %token PRINT SET
 
 %token SUPER
-%token PRIVATE PROTECTED
+%token PRIVATE PROTECTED PUBLIC
 %token FINAL STATIC
 
 %token EOF
@@ -70,6 +70,7 @@ var_decl_list:
 visibility:
 | PRIVATE {Private}
 | PROTECTED {Protected}
+| PUBLIC {Public}
 
 attr_decl:
 | a_visibility=visibility v=decl SEMI l=attr_decl 

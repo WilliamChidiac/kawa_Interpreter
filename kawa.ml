@@ -82,6 +82,7 @@ and seq = instr list
 type visibility =
   | Private
   | Protected
+  | Public
 
 type variable = {
   v_name : string;

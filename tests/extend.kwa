@@ -4,7 +4,7 @@ var triple pt;
 var triple t;
 
 class paire {
-  protected int x;
+  public int x;
   private int y;
 
   method protected void constructor(int x, int y) {
@@ -26,8 +26,20 @@ class triple extends paire {
   }
 
   
-  method private int produit() {
-    return this.x * this.y * this.z;
+  method private int produit(int y) {
+    return this.x * y * this.z;
+  }
+}
+
+class singleton {
+  protected int x;
+
+  method protected void constructor(int x) {
+    this.x = x;
+  }
+
+  method protected int somme(triple p) {
+    return p.x + this.x; 
   }
 }
 
@@ -36,8 +48,8 @@ main {
   t = new triple(3, 4, 5);
   print(p.somme());
   print(t.somme());
-  print(t.produit());
+  print(t.produit(4));
   pt = new paire(1, 2);
   print(pt.somme());
-  // affiche 3, puis 12, puis 60, puis 6.
+  // affiche 3, puis 7, puis 60, puis 3.
 }

@@ -128,22 +128,46 @@ let typecheck_prog p =
     | Field (exp, attr) -> begin
       match type_expr exp tenv with
       | TClass s ->
+        let inscope = ref false in
+        let main_class =
+          match Env.find_opt "this" tenv with
+          | None -> ""
+          | Some (TClass something) -> something
+          | Some _ -> error "this statment should never be reached." in
         let rec check_att_typ cls_name accessible =
           begin
             match
               List.find_opt (fun cls -> cls.class_name = cls_name) p.classes
             with
             | Some cls -> begin
+              if cls.class_name = main_class then inscope := true ;
               match List.find_opt (fun a -> a.a_name = attr) cls.attributes with
-              | Some a ->
-                if accessible || a.a_visibility = Protected then
-                  a.a_type
-                else
+              | Some a -> begin
+                match (a.a_visibility, accessible) with
+                | Public, _ -> a.a_type
+                | Protected, _ | Private, true -> begin
+                  if main_class = "" then
+                    error
+                      (Printf.sprintf
+                         "the attribut %s is trying to be acccessed outside of \
+                          it's defined scope."
+                         a.a_name)
+                  else if !inscope then
+                    a.a_type
+                  else
+                    error
+                      (Printf.sprintf
+                         "the attribute %s is trying to be accessed outside of \
+                          its defined scope. %s %s"
+                         a.a_name main_class cls.class_name)
+                end
+                | Private, false ->
                   error
                     (Printf.sprintf
                        "the attribute %s is private and can only be accessed \
                         from inside the class %s"
                        a.a_name cls.class_name)
+              end
               | None -> (
                 match cls.parent with
                 | Some c_name -> check_att_typ c_name false

@@ -29,6 +29,7 @@
       "super",    SUPER; 
       "private",  PRIVATE;
       "protected",PROTECTED;
+      "public",   PUBLIC;
       "final",    FINAL;
       "static",   STATIC;
     ] ;
