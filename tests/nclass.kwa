@@ -2,13 +2,13 @@ var segment s;
 var point p;
 
 class point {
-  attribute int x;
-  attribute int y;
+  public int x;
+  public static int y;
 }
 
 class segment {
-  attribute point a;
-  attribute point b;
+  public point a;
+  public point b;
 }
 
 main {
@@ -21,6 +21,6 @@ main {
   s.b.x = 3;
   p = s.b;
   p.y = 4;
-  print(s.a.x + s.a.y + s.b.x + s.b.y);
-  // affiche 10
+  print(p.y); // affiche 4
+  print(s.a.x + s.a.y + s.b.x + s.b.y); // affiche 12
 }

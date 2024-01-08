@@ -24,11 +24,30 @@ exception Return of vars
 let create_var ?(s = false) ?(f = false) ?(v = Null) () =
   { v_value = v; v_final = f; v_static = s }
 
-let change_var var value =
-  { v_value = value; v_final = var.v_final; v_static = var.v_static }
+let change_var var value = var.v_value <- value
 
 let exec_prog (p : program) : unit =
   let env = Hashtbl.create 16 in
+  let static_env = Hashtbl.create (List.length p.classes) in
+  List.iter
+    (fun cls ->
+      let class_env =
+        Hashtbl.create
+          (List.fold_left
+             (fun i a ->
+               if a.a_static then
+                 i + 1
+               else
+                 i)
+             0 cls.attributes) in
+      List.iter
+        (fun att ->
+          if att.a_static then
+            Hashtbl.add class_env att.a_name
+              { v_value = Null; v_static = att.a_static; v_final = att.a_final })
+        cls.attributes ;
+      Hashtbl.add static_env cls.class_name class_env)
+    p.classes ;
   let init_var =
     List.fold_left
       (fun l var ->
@@ -130,14 +149,26 @@ let exec_prog (p : program) : unit =
           List.iter
             (fun a ->
               Hashtbl.add super a.a_name
-                {
-                  v_value =
-                    (match a.a_value with
-                    | Some value -> eval value
-                    | None -> Null);
-                  v_final = a.a_final;
-                  v_static = a.a_static;
-                })
+                (if a.a_static then (
+                   let value =
+                     Hashtbl.find
+                       (Hashtbl.find static_env cls.class_name)
+                       a.a_name in
+                   if value.v_value = Null then
+                     change_var value
+                       (match a.a_value with
+                       | None -> Null
+                       | Some e -> eval e) ;
+                   value
+                 ) else
+                   {
+                     v_value =
+                       (match a.a_value with
+                       | Some value -> eval value
+                       | None -> Null);
+                     v_final = a.a_final;
+                     v_static = a.a_static;
+                   }))
             cls.attributes ;
           VObj { cls = s; fields = super }
         | None ->
@@ -171,7 +202,7 @@ let exec_prog (p : program) : unit =
           if var.v_final && var.v_value != Null then
             failwith "the field you're trying to change is final."
           else
-            Hashtbl.add nenv s (change_var var (eval e)))
+            change_var var (eval e))
       | If (e, i1, i2) ->
         if evalb e then
           exec_seq i1

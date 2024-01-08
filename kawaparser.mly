@@ -58,6 +58,10 @@ final:
 | FINAL {true}
 | {false}
 
+static:
+| STATIC {true}
+| {false}
+
 decl:
 |v_final=final v_typ=typ ids=separated_list(COMMA, var) 
 { List.map (fun (v_name, v_value) -> {v_name; v_typ; v_value; v_final}) ids }
@@ -73,14 +77,16 @@ visibility:
 | PUBLIC {Public}
 
 attr_decl:
-| a_visibility=visibility v=decl SEMI l=attr_decl 
+| visibility=visibility s=static v=decl SEMI l=attr_decl 
   {List.fold_left 
-    (fun li var -> 
+    (fun li var -> match var.v_value, s, var.v_final with
+    | None, true, true -> failwith "static final attribute should be initialized at declaration."
+    | _, _, _ -> 
       {a_name=var.v_name; 
        a_type=var.v_typ; 
-       a_visibility=a_visibility;
+       a_visibility=visibility;
        a_final=var.v_final; 
-       a_static=false; 
+       a_static=s; 
        a_value=var.v_value} :: li
     )l v}
 | { [] }
