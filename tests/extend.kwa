@@ -4,7 +4,7 @@ var triple pt;
 var triple t;
 
 class paire {
-  public int x;
+  public final int x;
   private int y;
 
   method protected void constructor(int x, int y) {

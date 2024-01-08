@@ -6,21 +6,33 @@ type value =
   | VObj of obj
   | Null
 
+and vars = {
+  mutable v_value : value;
+  v_final : bool;
+  v_static : bool;
+}
+
 and obj = {
   cls : string;
-  fields : (string, value) Hashtbl.t;
+  fields : (string, vars) Hashtbl.t;
 }
 
 exception Error of string
 
-exception Return of value
+exception Return of vars
+
+let create_var ?(s = false) ?(f = false) ?(v = Null) () =
+  { v_value = v; v_final = f; v_static = s }
+
+let change_var var value =
+  { v_value = value; v_final = var.v_final; v_static = var.v_static }
 
 let exec_prog (p : program) : unit =
   let env = Hashtbl.create 16 in
   let init_var =
     List.fold_left
       (fun l var ->
-        Hashtbl.add env var.v_name Null ;
+        Hashtbl.add env var.v_name (create_var ~f:var.v_final ()) ;
         match var.v_value with
         | Some v -> Set (Var var.v_name, v) :: l
         | None -> l)
@@ -33,22 +45,25 @@ let exec_prog (p : program) : unit =
         match List.find_opt (fun m -> m.method_name = f) cls.methods with
         | Some m ->
           let local_env = Hashtbl.copy env in
-          Hashtbl.add local_env "this" (VObj this) ;
-          Hashtbl.add local_env "return" Null ;
+          Hashtbl.add local_env "this" (create_var ~v:(VObj this) ()) ;
           List.iter2
-            (fun (name, t) value -> Hashtbl.add local_env name value)
+            (fun (name, t) value ->
+              Hashtbl.add local_env name (create_var ~v:value ()))
             m.params args ;
           let e_l =
             List.fold_left
               (fun l var ->
-                Hashtbl.add local_env var.v_name Null ;
+                Hashtbl.add local_env var.v_name (create_var ~f:var.v_final ()) ;
                 match var.v_value with
                 | Some e -> Set (Var var.v_name, e) :: l
                 | None -> l)
               [] m.locals in
           exec_seq e_l local_env ;
-          (try exec_seq m.code local_env with Failure e -> ()) ;
-          Hashtbl.find local_env "return"
+          (try
+             exec_seq m.code local_env ;
+             create_var ()
+           with Return e -> e)
+            .v_value
         | None -> (
           match cls.parent with
           | Some x ->
@@ -103,10 +118,8 @@ let exec_prog (p : program) : unit =
       | Unop (Not, e) -> VBool (not (evalb e))
       | Get id ->
         let s, nenv = memory id lenv in
-        Hashtbl.find nenv s
-      | This ->
-        let res = Hashtbl.find lenv "this" in
-        res
+        (Hashtbl.find nenv s).v_value
+      | This -> (Hashtbl.find lenv "this").v_value
       | New s -> begin
         match List.find_opt (fun a -> a.class_name = s) p.classes with
         | Some cls ->
@@ -114,7 +127,18 @@ let exec_prog (p : program) : unit =
             match cls.parent with
             | Some x -> (evalo (New x)).fields
             | None -> Hashtbl.create 1 in
-          List.iter (fun a -> Hashtbl.add super a.a_name Null) cls.attributes ;
+          List.iter
+            (fun a ->
+              Hashtbl.add super a.a_name
+                {
+                  v_value =
+                    (match a.a_value with
+                    | Some value -> eval value
+                    | None -> Null);
+                  v_final = a.a_final;
+                  v_static = a.a_static;
+                })
+            cls.attributes ;
           VObj { cls = s; fields = super }
         | None ->
           failwith (Printf.sprintf "the class %s has not been implemented." s)
@@ -137,9 +161,17 @@ let exec_prog (p : program) : unit =
         | VBool b -> Printf.printf "%b\n" b
         | _ -> failwith "case not implemented in exec"
       end
-      | Set (m, e) ->
+      | Set (m, e) -> (
         let s, nenv = memory m lenv in
-        Hashtbl.add nenv s (eval e)
+        match Hashtbl.find_opt nenv s with
+        | None ->
+          Hashtbl.add nenv s
+            { v_value = eval e; v_final = false; v_static = false }
+        | Some var ->
+          if var.v_final && var.v_value != Null then
+            failwith "the field you're trying to change is final."
+          else
+            Hashtbl.add nenv s (change_var var (eval e)))
       | If (e, i1, i2) ->
         if evalb e then
           exec_seq i1
@@ -150,8 +182,8 @@ let exec_prog (p : program) : unit =
           exec_seq i
         done
       | Return e ->
-        Hashtbl.add lenv "return" (eval e) ;
-        raise (Failure "return statement reached")
+        let ret = { v_value = eval e; v_final = false; v_static = false } in
+        raise (Return ret)
       | Expr e ->
         let _ = eval e in
         ()
