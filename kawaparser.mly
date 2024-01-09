@@ -138,6 +138,7 @@ expression:
 | NEW obj=IDENT {New(obj)}
 | NEW cls=IDENT LPAR params=separated_list(COMMA, expression) RPAR {NewCstr(cls, params)}
 | THIS { This }
+| SUPER {Super}
 | obj=expression DOT meth=IDENT LPAR params=separated_list(COMMA, expression) RPAR {MethCall(obj, meth, params)}
 | SUPER LPAR params=separated_list(COMMA, expression) RPAR {MethCall(This, "super", params)}
 ;

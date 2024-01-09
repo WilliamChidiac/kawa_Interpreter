@@ -48,6 +48,7 @@ type expr =
   | Get of mem_access
   (* Objet courant *)
   | This
+  | Super
   (* Création d'un nouvel objet *)
   | New of string
   | NewCstr of string * expr list

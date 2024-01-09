@@ -58,6 +58,7 @@ let typecheck_prog p =
       TBool
     | Get s -> type_mem_access s tenv
     | This -> type_mem_access (Var "this") tenv
+    | Super -> type_mem_access (Var "super") tenv
     | New s -> TClass s
     | NewCstr (s, params) ->
       begin
@@ -226,7 +227,12 @@ let typecheck_prog p =
   let check_meth tenv =
     List.iter
       (fun cls ->
-        let aux_env = Env.add "this" (TClass cls.class_name) tenv in
+        let aux = Env.add "this" (TClass cls.class_name) tenv in
+        let parent =
+          match cls.parent with
+          | None -> TClass "Super not defined"
+          | Some name_of_parent -> TClass name_of_parent in
+        let aux_env = Env.add "super" parent aux in
         List.iter
           (fun meth ->
             let ret = ref true in

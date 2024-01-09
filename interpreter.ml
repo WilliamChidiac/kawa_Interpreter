@@ -65,6 +65,36 @@ let exec_prog (p : program) : unit =
         | Some m ->
           let local_env = Hashtbl.copy env in
           Hashtbl.add local_env "this" (create_var ~v:(VObj this) ()) ;
+          begin
+            match cls.parent with
+            | None -> ()
+            | Some s -> begin
+              match List.find_opt (fun cls -> cls.class_name = s) p.classes with
+              | Some clas -> begin
+                match
+                  List.find_opt (fun cls -> cls.class_name = this.cls) p.classes
+                with
+                | None -> ()
+                | Some c_class ->
+                  let fields = Hashtbl.create 16 in
+                  Hashtbl.iter
+                    (fun att_name var ->
+                      if
+                        List.exists
+                          (fun att -> att.a_name != att_name)
+                          c_class.attributes
+                      then
+                        Hashtbl.add fields att_name
+                          (Hashtbl.find this.fields att_name))
+                    this.fields ;
+                  Hashtbl.add local_env "super"
+                    (create_var
+                       ~v:(VObj { cls = c_class.class_name; fields })
+                       ())
+              end
+              | None -> failwith (Printf.sprintf "class undefined.")
+            end
+          end ;
           List.iter2
             (fun (name, t) value ->
               Hashtbl.add local_env name (create_var ~v:value ()))
@@ -131,7 +161,7 @@ let exec_prog (p : program) : unit =
           res
         else
           false
-      | _ -> failwith "non effectue"
+      | _ -> failwith "illegal operation"
     and eval (e : expr) : value =
       match e with
       | Int n -> VInt n
@@ -157,6 +187,7 @@ let exec_prog (p : program) : unit =
         let s, nenv = memory id lenv in
         (Hashtbl.find nenv s).v_value
       | This -> (Hashtbl.find lenv "this").v_value
+      | Super -> (Hashtbl.find lenv "super").v_value
       | New s -> begin
         match List.find_opt (fun a -> a.class_name = s) p.classes with
         | Some cls ->
