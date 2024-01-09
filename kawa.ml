@@ -34,6 +34,8 @@ type binop =
   | Neq
   | And
   | Or
+  | Sequ
+  | Sneq
 
 (* Expressions *)
 type expr =

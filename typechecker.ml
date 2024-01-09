@@ -46,6 +46,10 @@ let typecheck_prog p =
       check e1 TBool tenv ;
       check e2 TBool tenv ;
       TBool
+    | Binop (exp, e1, e2) when exp = Sequ || exp = Sneq ->
+      let e1_type = type_expr e1 tenv in
+      check e2 e1_type tenv ;
+      TBool
     | Unop (Opp, e1) ->
       check e1 TInt tenv ;
       TInt

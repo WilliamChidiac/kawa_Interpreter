@@ -57,6 +57,8 @@ rule token = parse
   | "."  { DOT }
   | ";"  { SEMI }
   | "="  {SET}
+  | "===" {SEQU}
+  | "=/=" {SNEQ}
   | "("  { LPAR }
   | ")"  { RPAR }
   | "{"  { BEGIN }

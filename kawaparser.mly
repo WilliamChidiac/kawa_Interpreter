@@ -14,6 +14,7 @@
 %token LPAR RPAR BEGIN END SEMI
 %token ADD SUB MUL DIV MOD U_SUB (*arithmetique numerique*)
 %token LT LE GT GE EQ NEQ AND OR NOT (*arithmetique booleenne*)
+%token SEQU SNEQ (*structural equality and inequality*)
 %token IF ELSE WHILE
 %token CLASS EXT DOT NEW
 %token COMMA
@@ -29,7 +30,7 @@
 (*declaration des priorite*)
 %left OR
 %left AND
-%nonassoc LT LE GT GE EQ NEQ
+%nonassoc LT LE GT GE EQ NEQ SEQU SNEQ
 %right NOT 
 %left ADD SUB
 %left MUL DIV MOD 
@@ -142,6 +143,8 @@ expression:
 ;
 
 %inline bop : 
+| SEQU {Sequ}
+| SNEQ {Sneq}
 | OR {Or}
 | AND {And}
 | ADD {Add}

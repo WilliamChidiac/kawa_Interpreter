@@ -116,6 +116,22 @@ let exec_prog (p : program) : unit =
       | Field (e, s) ->
         let o = evalo e in
         (s, o.fields)
+    and structural_equality e1 e2 =
+      match (eval e1, eval e2) with
+      | VInt n1, VInt n2 -> n1 = n2
+      | VBool b1, VBool b2 -> b1 = b2
+      | VObj o1, VObj o2 ->
+        if o1.cls = o2.cls then
+          let res =
+            Hashtbl.fold
+              (fun a b acc ->
+                let v = Hashtbl.find o2.fields a in
+                v.v_value = b.v_value && acc)
+              o1.fields true in
+          res
+        else
+          false
+      | _ -> failwith "non effectue"
     and eval (e : expr) : value =
       match e with
       | Int n -> VInt n
@@ -133,6 +149,8 @@ let exec_prog (p : program) : unit =
       | Binop (Neq, e1, e2) -> VBool (evali e1 <> evali e2)
       | Binop (Or, e1, e2) -> VBool (evalb e1 || evalb e2)
       | Binop (And, e1, e2) -> VBool (evalb e1 && evalb e2)
+      | Binop (Sequ, e1, e2) -> VBool (structural_equality e1 e2)
+      | Binop (Sneq, e1, e2) -> VBool (not (structural_equality e1 e2))
       | Unop (Opp, e) -> VInt (-evali e)
       | Unop (Not, e) -> VBool (not (evalb e))
       | Get id ->
