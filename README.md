@@ -1,5 +1,5 @@
-Nous avons décidé de travailler par catégorie (arithmétique, classes, etc...) et non pas par fichier. Cela nous semblait plus pratique et convenable pour la réalisation du projet.
-Chacun à travaillé de son côté la plupart du temps, ce qui n'a pas empêché de nous concerter sur quelques extensions et sur certaines difficultés un peu plus gênantes telles que bugs, questions, etc...
+Nous avons décidé de travailler par catégorie (arithmétique, classes, etc.) et non pas par fichier. Cela nous semblait plus pratique et convenable pour la réalisation du projet.
+Chacun a travaillé de son côté la plupart du temps, ce qui n'a pas empêché de nous concerter sur quelques extensions et sur certaines difficultés un peu plus gênantes telles que bugs, questions, etc.
 Nous avons fini la partie basique du projet à savoir, l'arithmétique, les variables, les instructions, les classes et attributs, les méthodes et l'héritage, dans tous les fichiers, dont l'interprète, le lexer, le parser et le vérificateur de types.
 Nous avons de plus rajouté les extensions suivantes:
 
