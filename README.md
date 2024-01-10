@@ -8,7 +8,7 @@ Nous avons de plus rajouté les extensions suivantes:
 - Déclaration avec valeur initiale (int x = 0; )
 - Déclaration en série (int x, y = 0, z, ... ; )
 - Champ statiques (en revanche, accès uniquement à travers les instances de classe et non les classes elles-mêmes. Mais les attributs static ont quand meme une mémoire partagée)
-- Super (le constructeur super, mais aussi le mot clé qui donne accés à la classe parent)
+- Super (le constructeur super, mais aussi le mot clé qui donne accès à la classe parent)
 - Égalité et inégalité structurelle
 
 Les extensions ont été codées sur tous les fichiers elles sont donc complètes et utilisables. En ce qui concerne certaines extensions, nous avons aussi dû modifier d'autres fichiers tels que kawai.ml.
