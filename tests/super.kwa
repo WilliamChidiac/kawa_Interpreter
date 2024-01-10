@@ -1,0 +1,34 @@
+
+var line s;
+
+class point {
+  private int x;
+  public static int y;
+
+  method public void constructor(int x, int y){
+    this.x = x;
+    this.y = y;
+  }
+}
+
+class line extends point {
+  public int a;
+  public int b;
+
+  method public void constructor(int a, int b, int x, int y){
+    super(x, y);
+    this.a = a;
+    this.b = b;
+    print(super.x);
+  }
+
+  method public int somme(){
+    return this.a + this.b + super.x + this.y;
+  }
+}
+
+main {
+  s = new line(1, 2, 3, 4); // affiche 3
+  print(s.somme()); // affiche 10
+  print(s.y); // affiche 4
+}

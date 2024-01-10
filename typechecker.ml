@@ -14,8 +14,85 @@ module Env = Map.Make (String)
 
 type tenv = typ Env.t
 
+type class_utilities =
+  | Method of method_def
+  | Attribut of attribute
+
 let typecheck_prog p =
-  let rec add_env l tenv =
+  let rec check_accessiblity cls_name main_class m_a_name names_from_cls
+      att_or_meth =
+    let f_name = function
+      | Method m -> m.method_name
+      | Attribut a -> a.a_name in
+    let f_type = function
+      | Method m -> m.return
+      | Attribut a -> a.a_type in
+    let f_visibility = function
+      | Method m -> m.visibility
+      | Attribut a -> a.a_visibility in
+    let inscope = ref false in
+    let rec check_att_typ cls_name accessible =
+      begin
+        match
+          List.find_opt (fun cls -> cls.class_name = cls_name) p.classes
+        with
+        | Some cls -> begin
+          if cls.class_name = main_class then inscope := true ;
+          match
+            List.find_opt (fun a -> f_name a = m_a_name) (names_from_cls cls)
+          with
+          | Some a -> begin
+            match (f_visibility a, accessible) with
+            | Public, _ -> f_type a
+            | Protected, _ | Private, true -> begin
+              if main_class = "" then
+                error
+                  (Printf.sprintf
+                     "the %s %s is trying to be acccessed outside of it's \
+                      defined scope."
+                     att_or_meth (f_name a))
+              else if !inscope then
+                f_type a
+              else
+                error
+                  (Printf.sprintf
+                     "the %s %s is trying to be accessed outside of its \
+                      defined scope."
+                     att_or_meth (f_name a))
+            end
+            | Private, false ->
+              error
+                (Printf.sprintf
+                   "the %s %s is private and can only be accessed from inside \
+                    the class %s"
+                   att_or_meth (f_name a) cls.class_name)
+          end
+          | None -> (
+            match cls.parent with
+            | Some c_name -> check_att_typ c_name false
+            | None ->
+              failwith
+                (Printf.sprintf "%s %s is undefined." att_or_meth m_a_name))
+        end
+        | None -> failwith (Printf.sprintf "object %s is undefined." cls_name)
+      end in
+    check_att_typ cls_name true
+  and get_main_local_env exp tenv =
+    let get_main_env key tenv =
+      match Env.find_opt key tenv with
+      | None -> ""
+      | Some (TClass something) -> something
+      | Some _ ->
+        error
+          (Printf.sprintf "%s cannot be defined as a variable or attribute." key)
+    in
+    ( (match exp with
+      | Super -> get_main_env "super" tenv
+      | _ -> get_main_env "this" tenv),
+      match type_expr exp tenv with
+      | TClass s -> s
+      | _ -> failwith "object expected." )
+  and add_env l tenv =
     List.fold_left
       (fun env var ->
         (match var.v_value with
@@ -65,7 +142,7 @@ let typecheck_prog p =
         match List.find_opt (fun cls -> cls.class_name = s) p.classes with
         | Some cls -> begin
           match
-            List.find_opt (fun m -> m.method_name = "constructor") cls.methods
+            List.find_opt (fun m -> m.method_name = cls.class_name) cls.methods
           with
           | Some meth ->
             List.iter2 (fun (s, t) e -> check e t tenv) meth.params params
@@ -74,55 +151,25 @@ let typecheck_prog p =
         | None -> error "class is undefined"
       end ;
       TClass s
-    | MethCall (obj, s, params) -> begin
-      match type_expr obj tenv with
-      | TClass cls_name -> begin
-        let s =
-          if s = "super" then
-            match
-              (List.find (fun cls -> cls.class_name = cls_name) p.classes)
-                .parent
-            with
-            | Some parent -> parent
-            | None ->
-              failwith "you can't use the super keyword if this has no parents."
-          else
-            s in
-        let rec get_return_typ cls_name accessible =
-          begin
-            match
-              List.find_opt (fun cls -> cls.class_name = cls_name) p.classes
-            with
-            | Some cls -> begin
-              let s =
-                if s = cls.class_name then
-                  "constructor"
-                else
-                  s in
-              match
-                List.find_opt (fun meth -> meth.method_name = s) cls.methods
-              with
-              | Some meth ->
-                if accessible || meth.visibility = Protected then
-                  meth.return
-                else
-                  error
-                    (Printf.sprintf
-                       "the method %s is private and can only be accessed from \
-                        inside the class %s"
-                       meth.method_name cls.class_name)
-              | None -> (
-                match cls.parent with
-                | Some c_name -> get_return_typ c_name false
-                | None -> failwith (Printf.sprintf "method %s is undefined." s))
-            end
-            | None ->
-              failwith (Printf.sprintf "class %s should not exist." cls_name)
-          end in
-        get_return_typ cls_name true
-      end
-      | _ -> error "syntaxe error"
-    end
+    | MethCall (obj, m_name, params) ->
+      let main_class, local_class = get_main_local_env obj tenv in
+      let m_name =
+        if m_name = "super" then
+          match
+            (List.find (fun cls -> cls.class_name = local_class) p.classes)
+              .parent
+          with
+          | Some parent -> parent
+          | None ->
+            failwith "you can't use the super keyword if this has no parents."
+        else if m_name = local_class then
+          "constructor"
+        else
+          m_name in
+      check_accessiblity local_class main_class m_name
+        (fun cls -> List.fold_left (fun ms m -> Method m :: ms) [] cls.methods
+          : class_def -> 'b list)
+        "method"
     | _ -> failwith "case not implemented in type_expr"
   and type_mem_access m tenv =
     match m with
@@ -130,60 +177,13 @@ let typecheck_prog p =
       try Env.find s tenv
       with Not_found -> error (Printf.sprintf "Variable %s not found" s)
     end
-    | Field (exp, attr) -> begin
-      match type_expr exp tenv with
-      | TClass s ->
-        let inscope = ref false in
-        let main_class =
-          match Env.find_opt "this" tenv with
-          | None -> ""
-          | Some (TClass something) -> something
-          | Some _ -> error "this statment should never be reached." in
-        let rec check_att_typ cls_name accessible =
-          begin
-            match
-              List.find_opt (fun cls -> cls.class_name = cls_name) p.classes
-            with
-            | Some cls -> begin
-              if cls.class_name = main_class then inscope := true ;
-              match List.find_opt (fun a -> a.a_name = attr) cls.attributes with
-              | Some a -> begin
-                match (a.a_visibility, accessible) with
-                | Public, _ -> a.a_type
-                | Protected, _ | Private, true -> begin
-                  if main_class = "" then
-                    error
-                      (Printf.sprintf
-                         "the attribut %s is trying to be acccessed outside of \
-                          it's defined scope."
-                         a.a_name)
-                  else if !inscope then
-                    a.a_type
-                  else
-                    error
-                      (Printf.sprintf
-                         "the attribute %s is trying to be accessed outside of \
-                          its defined scope. %s %s"
-                         a.a_name main_class cls.class_name)
-                end
-                | Private, false ->
-                  error
-                    (Printf.sprintf
-                       "the attribute %s is private and can only be accessed \
-                        from inside the class %s"
-                       a.a_name cls.class_name)
-              end
-              | None -> (
-                match cls.parent with
-                | Some c_name -> check_att_typ c_name false
-                | None ->
-                  failwith (Printf.sprintf "attribut %s is undefined." attr))
-            end
-            | None -> failwith (Printf.sprintf "object %s is undefined." s)
-          end in
-        check_att_typ s true
-      | _ -> failwith "erreur de syntaxe."
-    end
+    | Field (exp, attr) ->
+      let main_class, local_class = get_main_local_env exp tenv in
+      check_accessiblity local_class main_class attr
+        (fun cls ->
+           List.fold_left (fun atts a -> Attribut a :: atts) [] cls.attributes
+          : class_def -> 'b list)
+        "attribut"
   and check_instr i ret tenv =
     match i with
     | Print e -> check_multi e [TInt; TBool] tenv

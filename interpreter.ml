@@ -58,7 +58,18 @@ let exec_prog (p : program) : unit =
       [] p.globals in
 
   let rec eval_call f this args env =
-    let rec eval_meth cls_name f =
+    let f =
+      if f = "super" then
+        let cls = List.find (fun cls -> cls.class_name = this.cls) p.classes in
+        match cls.parent with
+        | Some parent -> parent
+        | None ->
+          failwith
+            "the class %s has no parent class for you to use the super \
+             constructor "
+      else
+        f in
+    let rec eval_meth cls_name =
       match List.find_opt (fun cls -> cls.class_name = cls_name) p.classes with
       | Some cls -> begin
         match List.find_opt (fun m -> m.method_name = f) cls.methods with
@@ -115,18 +126,14 @@ let exec_prog (p : program) : unit =
             .v_value
         | None -> (
           match cls.parent with
-          | Some x ->
-            if f = "super" then
-              eval_meth x "constructor"
-            else
-              eval_meth x f
+          | Some x -> eval_meth x
           | None ->
             failwith
               (Printf.sprintf "the method you are trying to call is undefined.")
           )
       end
       | None -> failwith (Printf.sprintf "class undefined.") in
-    eval_meth this.cls f
+    eval_meth this.cls
   and exec_seq s lenv =
     let rec evali e =
       match eval e with
@@ -225,7 +232,7 @@ let exec_prog (p : program) : unit =
       end
       | NewCstr (cls_name, params) ->
         let obj = evalo (New cls_name) in
-        let _ = eval_call "constructor" obj (get_params_value params) lenv in
+        let _ = eval_call cls_name obj (get_params_value params) lenv in
         VObj obj
       | MethCall (o, meth, param_expression) ->
         (get_params_value param_expression |> eval_call meth (evalo o)) lenv

@@ -106,7 +106,8 @@ extend_opt:
 
 class_def:
 | CLASS class_name=IDENT parent=extend_opt BEGIN attributes=attr_decl methods=meth_def*  END 
-    {{class_name; attributes; methods; parent}}
+    {List.iter (fun m -> if m.method_name = "constructor" then m.method_name <- class_name) methods;
+    {class_name; attributes; methods; parent}}
 
 mem:
 | id = IDENT { Var(id) }

@@ -104,7 +104,7 @@ type attribute = {
 }
 
 type method_def = {
-  method_name : string;
+  mutable method_name : string;
   code : seq;
   params : (string * typ) list;
   locals : variable list;
@@ -135,3 +135,9 @@ type program = {
   globals : variable list;
   main : seq;
 }
+
+let f g a = g a
+
+let _ = f (fun (a, b) -> a + b) (1, 2)
+
+let _ = f (fun a -> 1 + a) 2
